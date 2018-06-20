@@ -56,7 +56,19 @@ td {
 
     td:last-child {
         text-align: right;
-        font-weight: 700;
-        color: #5969e2;
-        font-size: 24px;
     }
+
+.score {
+    display: inline-block;
+    font-weight: 700;
+    color: #5969e2;
+    font-size: 24px;
+}
+
+.score.good {
+    color: #45CB85;
+}
+
+.score.bad {
+    color: #E08DAC;
+}
