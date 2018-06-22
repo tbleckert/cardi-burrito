@@ -1,44 +1,133 @@
 const users = document.getElementById('users');
-
-socket.on('getUsers', (data) => {
-    data.sort((a, b) => Math.sign(b.score - a.score));
-
-    users.innerHTML = '';
-
-    data.forEach((item) => {
-        const row = document.createElement('tr');
-
-        row.setAttribute('data-uuid', item.username);
-        row.setAttribute('data-score', item.score);
-
-        row.innerHTML = `<td><img width="60" height="60" src="${item.avatar}" alt=""></td><td>${item.name}</td><td><span data-element="score" class="score">${item.score}</span></td>`;
-        users.appendChild(row);
-    });
-});
+let store = [];
+let lastStore = [];
 
 let removeClassTimer = null;
 
-function updateScore(id, direction) {
-    clearTimeout(removeClassTimer);
+socket.on('getUsers', (data) => {
+    store = data;
 
-    const item = document.querySelector(`[data-uuid="${id}"]`);
+    sortUsers();
+    render();
+});
+
+function sortUsers() {
+    store.sort((a, b) => Math.sign(b.score - a.score));
+
+    store = store.map((item, i) => {
+        const mappedItem = Object.assign({}, item);
+        const position = i + 1;
+
+        mappedItem.last_position = ('position' in mappedItem) ? mappedItem.position : 0;
+        mappedItem.position = position;
+
+        return mappedItem;
+    });
+}
+
+function displayItem(element, wait, rerender) {
+    setTimeout(() => {
+        element.classList.add('display');
+
+        setTimeout(() => {
+            element.classList.add('displayed');
+
+            if (rerender) {
+                setTimeout(() => {
+                    sortUsers();
+                    render(true);
+                }, 1000);
+            }
+        }, 300);
+    }, wait);
+}
+
+function createElement(data, display) {
+    const element = document.createElement('article');
+
+    element.className = 'scoreboard__user';
+
+    if (display) {
+        element.className += ' display';
+    }
+
+    element.setAttribute('data-uuid', data.username);
+    element.setAttribute('data-score', data.score);
+
+    element.innerHTML = `<div><img width="60" height="60" src="${data.avatar}" alt=""></div><div>${data.name}</div><div><span data-element="score" class="score">${data.score}</span></div>`;
+
+    return element;
+}
+
+function newPosition(element) {
+    const newClass = ' pulse animated';
+    element.className += newClass;
+
+    setTimeout(() => {
+        element.className = element.className.replace(newClass, '').trim();
+    }, 1000);
+}
+
+function render(refresh) {
+    const wait = 200;
+    let currentWait = 0;
+
+    users.innerHTML = '';
+
+    store.forEach((item) => {
+        currentWait += wait;
+
+        const element = createElement(item, refresh);
+        users.appendChild(element);
+
+        if (refresh) {
+            if (item.last_position !== item.position) {
+                newPosition(element);
+            }
+        } else {
+            displayItem(element, currentWait);
+        }
+    });
+}
+
+function appendUser(data) {
+    store.push(data);
+
+    const element = createElement(data);
+
+    users.appendChild(element);
+
+    displayItem(element, 200, true);
+}
+
+window.appendUser = appendUser;
+
+function updateScore(data, direction) {
+    const item = document.querySelector(`[data-uuid="${data.username}"]`);
 
     if (item) {
-        let burritos = parseInt(item.getAttribute('data-score'), 10);
+        const score = data.score;
         const scoreEl = item.querySelector('[data-element="score"]');
         const className = (direction === 'up') ? ' tada animated good' : ' shake animated bad';
 
-        burritos = (direction === 'up') ? burritos + 1 : burritos - 1;
-
-        item.setAttribute('data-score', burritos);
+        item.setAttribute('data-score', score);
         scoreEl.innerHTML = burritos;
         scoreEl.className += className;
 
-        removeClassTimer = setTimeout(() => {
+        setTimeout(() => {
             scoreEl.className = scoreEl.className.replace(className, '').trim();
+
+            setTimeout(() => {
+                sortUsers();
+                render(true);
+            }, 1500);
         }, 1000);
+    } else {
+        appendUser(data);
     }
 }
+
+window.updateScore = updateScore;
 
 socket.on('GIVE', (data) => {
     updateScore(data, 'up');
