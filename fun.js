@@ -4,7 +4,11 @@ let lastStore = [];
 
 let removeClassTimer = null;
 
-socket.on('getUsers', (data) => {
+hey.on('open', function () {
+    hey.get('getReceivedList', { type: 'burrito', sort: 'points', order: 'asc', take: 5, skip: 0 });
+});
+
+hey.on('receivedList', (data) => {
     store = data;
 
     sortUsers();
@@ -42,6 +46,16 @@ function displayItem(element, wait, rerender) {
     }, wait);
 }
 
+function displayStats(data, element) {
+    const statsEl = element.querySelector('.scoreboard__user__stats');
+
+    if (statsEl.classList.contains('display')) {
+        statsEl.classList.remove('display');
+    } else {
+        statsEl.classList.add('display');
+    }
+}
+
 function createElement(data, display) {
     const element = document.createElement('article');
 
@@ -54,7 +68,25 @@ function createElement(data, display) {
     element.setAttribute('data-uuid', data.username);
     element.setAttribute('data-score', data.score);
 
-    element.innerHTML = `<div><img width="60" height="60" src="${data.avatar}" alt=""></div><div>${data.name}</div><div><span data-element="score" class="score">${data.score}</span></div>`;
+    element.innerHTML = `
+        <div class="scoreboard__user__row scoreboard__user__summary">
+            <div>
+                <img width="60" height="60" src="${data.avatar}" alt="">
+            </div>
+            <div>${data.name}</div>
+            <div><span data-element="score" class="score">${data.score}</span></div>
+        </div>
+        <div class="scoreboard__user__stats">
+            <div class="scoreboard__user__stats__row">
+
+            </div>
+            <div class="scoreboard__user__stats__row">
+
+            </div>
+        </div>
+    `;
+
+    element.querySelector('.scoreboard__user__summary').addEventListener('click', () => displayStats(data, element), false);
 
     return element;
 }
@@ -100,39 +132,50 @@ function appendUser(data) {
     displayItem(element, 200, true);
 }
 
-window.appendUser = appendUser;
+function updateUser(data, direction, item) {
+    const score = data.score;
+    const scoreEl = item.querySelector('[data-element="score"]');
+    const className = (direction === 'up') ? ' tada animated good' : ' shake animated bad';
+
+    item.setAttribute('data-score', score);
+    scoreEl.innerHTML = score;
+    scoreEl.className += className;
+
+    store = store.slice().map((user) => {
+        const uppdatedUser = Object.assign({}, user);
+
+        if (user.username === data.username) {
+            uppdatedUser.score = data.score;
+        }
+
+        return uppdatedUser;
+    });
+
+    setTimeout(() => {
+        scoreEl.className = scoreEl.className.replace(className, '').trim();
+
+        setTimeout(() => {
+            sortUsers();
+            render(true);
+        }, 1500);
+    }, 1000);
+}
 
 function updateScore(data, direction) {
+    console.log(data, direction);
     const item = document.querySelector(`[data-uuid="${data.username}"]`);
 
     if (item) {
-        const score = data.score;
-        const scoreEl = item.querySelector('[data-element="score"]');
-        const className = (direction === 'up') ? ' tada animated good' : ' shake animated bad';
-
-        item.setAttribute('data-score', score);
-        scoreEl.innerHTML = burritos;
-        scoreEl.className += className;
-
-        setTimeout(() => {
-            scoreEl.className = scoreEl.className.replace(className, '').trim();
-
-            setTimeout(() => {
-                sortUsers();
-                render(true);
-            }, 1500);
-        }, 1000);
+        updateUser(data, direction, item);
     } else {
         appendUser(data);
     }
 }
 
-window.updateScore = updateScore;
-
-socket.on('GIVE', (data) => {
+hey.on('GIVE', (data) => {
     updateScore(data, 'up');
 });
 
-socket.on('TAKE_AWAY', (data) => {
+hey.on('TAKE_AWAY', (data) => {
     updateScore(data, 'down');
 });

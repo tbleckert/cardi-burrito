@@ -38,9 +38,7 @@ img {
     border-radius: 5px;
     box-shadow: 0 7px 14px 0 rgba(50,50,93,.1), 0 3px 6px 0 rgba(0,0,0,.07);
     overflow: hidden;
-    display: flex;
     margin-top: 16px;
-    align-items: center;
     transition: .3s transform cubic-bezier(0.680, -0.550, 0.265, 1.550), .3s opacity;
     opacity: 0;
     transform: translate3d(0, -20px, 0) rotateX(45deg);
@@ -56,25 +54,46 @@ img {
     transition: 1s transform cubic-bezier(0.680, -0.550, 0.265, 1.550), .3s opacity;
 }
 
-.scoreboard__user.spin {
-    transform: translate3d(0, 0, 0) rotateX(360deg);
+.scoreboard__user__row {
+    display: flex;
+    align-items: center;
+    height: 94px;
+    padding: 16px 0;
 }
 
-.scoreboard__user div {
-    padding: 16px 24px;
+.scoreboard__user__row div {
+    padding: 0 24px;
     flex: 1;
 }
 
-    .scoreboard__user div:first-child {
+    .scoreboard__user__row div:first-child {
         padding-right: 0;
         flex-grow: 0;
     }
 
-    .scoreboard__user div:last-child {
+    .scoreboard__user__row div:last-child {
         flex-grow: 0;
         text-align: right;
         padding-left: 0;
     }
+
+.scoreboard__user__summary {
+    cursor: pointer;
+}
+
+.scoreboard__user__stats {
+    height: 0;
+    overflow: hidden;
+    transition: .3s height cubic-bezier(0.680, -0.550, 0.265, 1.550);
+}
+
+.scoreboard__user__stats.display {
+    height: 188px;
+}
+
+.scoreboard__user__stats__row {
+    border-top: 1px dashed #e6ebf1;
+}
 
 .score {
     display: inline-block;
