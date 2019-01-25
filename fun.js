@@ -1,8 +1,5 @@
 const users = document.getElementById('users');
 let store = [];
-let lastStore = [];
-
-let removeClassTimer = null;
 
 hey.on('open', function () {
     hey.get('getReceivedList', { type: 'burrito', sort: 'points', order: 'asc', take: 5, skip: 0 });
@@ -14,6 +11,8 @@ hey.on('receivedList', (data) => {
     sortUsers();
     render();
 });
+
+hey.on('userStats', addStats);
 
 function sortUsers() {
     store.sort((a, b) => Math.sign(b.score - a.score));
@@ -50,16 +49,71 @@ function displayStats(data, element) {
     const statsEl = element.querySelector('.scoreboard__user__stats');
 
     if (statsEl.classList.contains('display')) {
+        console.log('hej då');
+        statsEl.style.cssText = 'height: 0px';
         statsEl.classList.remove('display');
     } else {
-        statsEl.classList.add('display');
+        console.log('hej');
+        hey.get('getUserStats', data.username);
     }
+}
+
+function addStatsRow(user, container) {
+    const html = `
+        <li>
+            <img width="30" height="30" src="${user.avatar}">
+            <strong>${user.name}</strong>
+            <span class="score">${user.score}</span>
+        </li>
+    `;
+
+    container.appendChild(document.createRange().createContextualFragment(html));
+}
+
+function addStats(data) {
+    const element = document.getElementById(`user:${data.user.username}`);
+    const statsEl = element.querySelector('[data-stats]');
+    const fromEl = element.querySelector('[data-from]');
+    const toEl = element.querySelector('[data-to]');
+
+    fromEl.innerHTML = '';
+    toEl.innerHTML = '';
+
+    if (data.gived.length) {
+        data.gived.forEach((user) => addStatsRow(user, toEl));
+    }
+
+    if (data.givers.length) {
+        data.givers.forEach((user) => addStatsRow(user, fromEl));
+    }
+
+    requestAnimationFrame(() => {
+        statsEl.classList.add('display');
+        statsEl.style.cssText = `
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: auto;
+            transition: none;
+        `;
+
+        requestAnimationFrame(() => {
+            const height = statsEl.getBoundingClientRect().height;
+
+            statsEl.style.cssText = '';
+
+            requestAnimationFrame(() => {
+                statsEl.style.cssText = `height: ${height}px`;
+            });
+        });
+    });
 }
 
 function createElement(data, display) {
     const element = document.createElement('article');
 
     element.className = 'scoreboard__user';
+    element.id = `user:${data.username}`;
 
     if (display) {
         element.className += ' display';
@@ -76,12 +130,18 @@ function createElement(data, display) {
             <div>${data.name}</div>
             <div><span data-element="score" class="score">${data.score}</span></div>
         </div>
-        <div class="scoreboard__user__stats">
-            <div class="scoreboard__user__stats__row">
-
+        <div class="scoreboard__user__stats" data-stats>
+            <div class="scoreboard__user__stats__column">
+                <strong class="scoreboard__user__stats__title">From</strong>
+                
+                <ol class="scoreboard__user__stats__list" data-from>
+                </ol>
             </div>
-            <div class="scoreboard__user__stats__row">
-
+            <div class="scoreboard__user__stats__column">
+                <strong class="scoreboard__user__stats__title">To</strong>
+                
+                <ol class="scoreboard__user__stats__list" data-to>
+                </ol>
             </div>
         </div>
     `;

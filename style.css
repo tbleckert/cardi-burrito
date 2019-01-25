@@ -43,6 +43,7 @@ img {
     opacity: 0;
     transform: translate3d(0, -20px, 0) rotateX(45deg);
     transform-style: preserve-3d;
+    position: relative;
 }
 
 .scoreboard__user.display {
@@ -82,17 +83,43 @@ img {
 }
 
 .scoreboard__user__stats {
+    display: flex;
     height: 0;
     overflow: hidden;
     transition: .3s height cubic-bezier(0.680, -0.550, 0.265, 1.550);
-}
-
-.scoreboard__user__stats.display {
-    height: 188px;
-}
-
-.scoreboard__user__stats__row {
     border-top: 1px dashed #e6ebf1;
+}
+
+.scoreboard__user__stats__column {
+    flex: 1;
+    padding: 20px;
+}
+
+.scoreboard__user__stats__title {
+    display: block;
+}
+
+.scoreboard__user__stats__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.scoreboard__user__stats__list > li {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.scoreboard__user__stats__list img {
+    display: block;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.scoreboard__user__stats__list strong {
+    flex: 1;
+    font-weight: normal;
 }
 
 .score {
